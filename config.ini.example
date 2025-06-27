@@ -1,0 +1,13 @@
+[DEFAULT]
+monitor_url = 
+uuid = 
+database_name = bmm_parlamentscraper.db
+logfile_name = app.log
+donotlemmatize = 1
+donotnotify = 0
+staging = 0
+
+[Download]
+url = https://www.parlament.hu/cgi-bin/web-api-pub/iromanyok.cgi
+irom_url = https://www.parlament.hu/irom42/
+access_token = 

@@ -1,0 +1,24 @@
+<br>
+
+<div class="bmm-event-label">
+    <b>Dokumentum címe</b>: <span class="bmm-event-data">{{ doc["title"] }}</span>
+</div>
+
+<div class="bmm-event-label">
+    <b>Megnyitás</b>: <a href="{{ doc["pageUrl"] }}" class="bmm-event-data">Kattints ide!</a>.
+</div>
+
+<div class="bmm-event-label">
+    <b>Egyezések száma</b>: {{ doc["results_count"] }}
+</div>
+
+<div class="bmm-event-label">
+    <b>Első egyezések</b>:
+    <ul>
+    {% for result in doc["results"] %}
+        <li>"{{ result["before"] }}<b>{{ result["common"] }}</b>{{ result["after"] }}" - {{ result["file"] }}</li>
+    {% endfor %}
+    </ul>
+</div>
+
+<br>
