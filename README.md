@@ -11,3 +11,5 @@ A szűrők beállításainak sémáját az `options_schema.json` fájlban talál
 A scraper a parlament [XML API](https://www.parlament.hu/w-api-tajekoztato)-ját használja.
 
 A forráskód a [Kormány scraper](https://github.com/Code-for-Hungary/bmm-kormanyscraper)-en alapszik, ami meg a [Közlöny scraper](https://github.com/Code-for-Hungary/bmm-kozlonyscraper)-re alapszik.
+
+Ha külföldi ip-jű szerverről szeretnénk futtatni a scriptet, amit a parlament.hu nem szeret, ezért szükség van proxyra. Socks proxy hostját a config Download.proxy_host értékének megadásával állíthatunk be.
