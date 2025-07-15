@@ -53,7 +53,7 @@ logging.basicConfig(
 )
 
 session = requests.Session()
-if config["Download"]["proxy_host"] != "":
+if 'proxy_host' in config["Download"] and config["Download"]["proxy_host"] != "":
     proxy_host = config["Download"]["proxy_host"]
     request_proxies: dict[str, str] = {
         "http": "socks5h://" + proxy_host + ":1080",
