@@ -1,0 +1,21 @@
+[
+    {
+        "id": 1,
+        "title": "Típus",
+        "type": "select",
+        "options": [
+            "Az Országgyűlés személyi döntését kezdeményező indítvány",
+            "Az Országgyűlésről szóló törvény 61. § (5) bekezdésében meghatározott kérelem",
+            "Azonnali kérdés",
+            "Beszámoló",
+            "Határozati javaslat",
+            "Interpelláció",
+            "Kérdés",
+            "Népszavazási kezdeményezés",
+            "Politikai nyilatkozatra vonatkozó javaslat",
+            "Politikai vita kezdeményezése",
+            "Tájékoztató",
+            "Törvényjavaslat"
+        ]
+    }
+]
