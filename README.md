@@ -2,6 +2,8 @@
 
 A [Figyuszhoz](https://figyusz.k-monitor.hu) készült scraper, ami a parlament.hu-n megjelenő [irományok](https://www.parlament.hu/web/guest/iromanyok-lekerdezese) közt keres kulcsszavakat vagy adatfrissítést.
 
+Szöveges keresést az "Irományszöveg"-ben végez a scraper. Ha egyéb dokumentumok vannak feltöltve, azokban nem keres.
+
 Dropdown menüből kiválasztható szűrőket használ.
 
 A szűrők beállításainak sémáját az `options_schema.json` fájlban találod, amit a db-ben `options_schema`-nak kell beállítani az `eventgenerators` táblában. (a konkrét json fájlt nem használja semmit, csak azért van itt, hogy ne csak az adatbázisban legyen meg)

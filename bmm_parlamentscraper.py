@@ -18,6 +18,22 @@ c = conn.cursor()
 c.execute("CREATE TABLE IF NOT EXISTS checked_items (item_id TEXT PRIMARY KEY)")
 
 
+letter_to_type = {
+    "S": "Az Országgyűlés személyi döntését kezdeményező indítvány",
+    "Ü": "Az Országgyűlésről szóló törvény 61. § (5) bekezdésében meghatározott kérelem",
+    "A": "Azonnali kérdés",
+    "B": "Beszámoló",
+    "H": "Határozati javaslat",
+    "I": "Interpelláció",
+    "K": "Kérdés",
+    "C": "Népszavazási kezdeményezés",
+    "P": "Politikai nyilatkozatra vonatkozó javaslat",
+    "V": "Politikai vita kezdeményezése",
+    "Y": "Tájékoztató",
+    "T": "Törvényjavaslat",
+}
+
+
 def is_checked(item_id):
     c.execute("SELECT 1 FROM checked_items WHERE item_id = ?", (item_id,))
     return c.fetchone() is not None
@@ -72,6 +88,7 @@ new_items = []
 for iromany in iromanyok:
     izon = iromany.attrib.get("izon", "N/A")
     link = iromany.attrib.get("href", "N/A")
+    szam = iromany.attrib.get("szam", " ")
     title = (
         [elem.text for elem in iromany if elem.tag == "cim"][0]
         if any(elem.tag == "cim" for elem in iromany)
@@ -81,6 +98,7 @@ for iromany in iromanyok:
     pdf_url = f"{irom_url}{irom_path}"
     item = {
         "izon": izon,
+        "type": letter_to_type.get(szam[0], None),
         "link": link,
         "title": title,
         "pdf_url": pdf_url,
@@ -90,7 +108,10 @@ for iromany in iromanyok:
     if not is_checked(key):
         new_items.append(item)
 
-new_items = new_items[:10]
+new_items = new_items[:30]
+
+for item in new_items:
+    mark_checked(item["izon"])
 
 doctext_by_uuid = {}
 for item in new_items:
@@ -171,18 +192,26 @@ def search(text, keyword, nlp_warn=False):
     return results
 
 
-for item in new_items:
-    for event in events["data"]:
-        selected_options: Optional[dict[list, str]] = event["selected_options"]
-        if type(selected_options) is not dict:
-            selected_options = None
-        items_lengths = 0
-        content = ""
-        logging.info(
-            f"Processing event {event['id']} - Type: {event['type']} - Parameters: {event['parameters']}"
-        )
+for event in events["data"]:
+    selected_options: Optional[dict[list, str]] = event["selected_options"]
+    if type(selected_options) is not dict:
+        selected_options = None
+    items_lengths = 0
+    content = ""
+    logging.info(
+        f"Processing event {event['id']} - Type: {event['type']} - Parameters: {event['parameters']}"
+    )
+
+    for item in new_items:
         title = item["title"]
         pageUrl = item["link"]
+        if (
+            selected_options
+            and "1" in selected_options
+            and item["type"]
+            and item["type"] not in selected_options["1"]
+        ):
+            continue
         if event["type"] == 1 and event["parameters"]:
             results = []
             for file in doctext_by_uuid.get(item["izon"], {}):
@@ -225,25 +254,24 @@ for item in new_items:
             items_lengths += 1
             logging.debug(f"Added item to notification content: {title}")
 
-        if items_lengths > 1:
-            content = "Találatok száma: " + str(items_lengths) + "<br>" + content
-            logging.info(f"Total matches for event {event['id']}: {items_lengths}")
-        elif items_lengths == 0:
-            logging.info(f"No matches found for event {event['id']}")
+    if items_lengths > 1:
+        content = "Találatok száma: " + str(items_lengths) + "<br>" + content
+        logging.info(f"Total matches for event {event['id']}: {items_lengths}")
+    elif items_lengths == 0:
+        logging.info(f"No matches found for event {event['id']}")
 
-        if config["DEFAULT"]["donotnotify"] == "0" and items_lengths > 0:
-            try:
-                backend.notifyEvent(event["id"], content)
-                logging.info(
-                    f"Successfully notified event {event['id']} with {items_lengths} matches"
-                )
-            except Exception as e:
-                logging.error(f"Failed to notify event {event['id']}: {str(e)}")
-        elif items_lengths > 0:
+    if config["DEFAULT"]["donotnotify"] == "0" and items_lengths > 0:
+        try:
+            backend.notifyEvent(event["id"], content)
             logging.info(
-                f"Notification disabled by config. Would have notified {items_lengths} items for event {event['id']}"
+                f"Successfully notified event {event['id']} with {items_lengths} matches"
             )
-    mark_checked(item["izon"])
+        except Exception as e:
+            logging.error(f"Failed to notify event {event['id']}: {str(e)}")
+    elif items_lengths > 0:
+        logging.info(
+            f"Notification disabled by config. Would have notified {items_lengths} items for event {event['id']}"
+        )
 
 try:
     conn.close()
