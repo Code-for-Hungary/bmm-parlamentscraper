@@ -2,7 +2,7 @@
 
 A [Figyuszhoz](https://figyusz.k-monitor.hu) készült scraper, ami a parlament.hu-n megjelenő [irományok](https://www.parlament.hu/web/guest/iromanyok-lekerdezese) közt keres kulcsszavakat vagy adatfrissítést.
 
-Szöveges keresést az "Irományszöveg"-ben végez a scraper. Ha egyéb dokumentumok vannak feltöltve, azokban nem keres.
+Szöveges keresést az "Irományszöveg"-ben végez a scraper. Ha egyéb dokumentumok vannak feltöltve, azokban nem keres. Illetve csak "folyamatba lévő" állapotú irományokat figyel.
 
 Dropdown menüből kiválasztható szűrőket használ.
 
