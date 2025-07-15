@@ -52,6 +52,16 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s | %(module)s.%(funcName)s line %(lineno)d: %(message)s",
 )
 
+session = requests.Session()
+if config["Download"]["proxy_host"] != "":
+    proxy_host = config["Download"]["proxy_host"]
+    request_proxies: dict[str, str] = {
+        "http": "socks5h://" + proxy_host + ":1080",
+        "https": "socks5h://" + proxy_host + ":1080",
+    }
+    session.proxies = request_proxies
+
+
 if config["DEFAULT"]["donotlemmatize"] == "0":
     import huspacy
 
@@ -70,7 +80,7 @@ url = config["Download"]["url"]
 access_token = config["Download"]["access_token"]
 irom_url = config["Download"]["irom_url"]
 
-response = requests.get(f"{url}?access_token={access_token}&p_all=F")
+response = session.get(f"{url}?access_token={access_token}&p_all=F")
 logging.info(response.url)
 
 if response.status_code == 200:
@@ -117,7 +127,7 @@ doctext_by_uuid = {}
 for item in new_items:
     logging.info(f"New item: {item['title']}")
     pdf_url = item["pdf_url"]
-    response = requests.get(pdf_url)
+    response = session.get(pdf_url)
     if response.status_code == 200:
         # save pdf
         with open(f"downloads/{item["izon"]}.pdf", "wb") as f:
