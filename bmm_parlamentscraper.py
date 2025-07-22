@@ -51,6 +51,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s | %(module)s.%(funcName)s line %(lineno)d: %(message)s",
 )
+eventgenerator_api_key = config["DEFAULT"].get("eventgenerator_api_key", None)
 
 session = requests.Session()
 if 'proxy_host' in config["Download"] and config["Download"]["proxy_host"] != "":
@@ -92,7 +93,7 @@ else:
     )
     exit(1)
 
-events = backend.getEvents()
+events = backend.getEvents(eventgenerator_api_key)
 
 new_items = []
 for iromany in iromanyok:
@@ -272,7 +273,7 @@ for event in events["data"]:
 
     if config["DEFAULT"]["donotnotify"] == "0" and items_lengths > 0:
         try:
-            backend.notifyEvent(event["id"], content)
+            backend.notifyEvent(event["id"], content, eventgenerator_api_key)
             logging.info(
                 f"Successfully notified event {event['id']} with {items_lengths} matches"
             )

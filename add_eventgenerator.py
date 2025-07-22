@@ -9,8 +9,9 @@ with open("options_schema.json") as f:
     options_schema = json.load(f)
 
 base_url = config["DEFAULT"]["monitor_url"]
+api_key = config["DEFAULT"]["api_key"]
 
-url = f"{base_url}/api/eventgenerators"
+url = f"{base_url}/api/eventgenerators?api_key={api_key}"
 
 data = {
     "name": "Parlament figyelő",
