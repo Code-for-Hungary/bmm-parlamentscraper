@@ -85,8 +85,15 @@ response = session.get(f"{url}?access_token={access_token}&p_all=F")
 logging.info(response.url)
 
 if response.status_code == 200:
-    text = response.content.decode("utf-8")
-    iromanyok = ET.fromstring(text)
+    try:
+        text = response.content.decode("utf-8")
+        iromanyok = ET.fromstring(text)
+    except ET.ParseError as e:
+        logging.error(f"Failed to parse XML response: {str(e)}")
+        exit(1)
+    except UnicodeDecodeError as e:
+        logging.error(f"Failed to decode response content: {str(e)}")
+        exit(1)
 else:
     logging.error(
         f"Failed to fetch data from {url}. Status code: {response.status_code}"
@@ -128,78 +135,92 @@ doctext_by_uuid = {}
 for item in new_items:
     logging.info(f"New item: {item['title']}")
     pdf_url = item["pdf_url"]
-    response = session.get(pdf_url)
-    if response.status_code == 200:
-        # save pdf
-        with open(f"downloads/{item["izon"]}.pdf", "wb") as f:
-            f.write(response.content)
-        doctexts = {}
-        pdf_path = os.path.join("downloads", f"{item['izon']}.pdf")
-        with pdfplumber.open(pdf_path) as pdf:
-            texts = ""
-            for page in pdf.pages:
-                texts += page.extract_text() + "\n"
-            texts = texts.replace("\n", " ").replace("  ", " ").strip()
-            doctexts[pdf_path] = texts
-        os.remove(os.path.join("downloads", f"{item['izon']}.pdf"))
-        doctext_by_uuid[item["izon"]] = doctexts
+    try:
+        response = session.get(pdf_url)
+        if response.status_code == 200:
+            # save pdf
+            with open(f"downloads/{item['izon']}.pdf", "wb") as f:
+                f.write(response.content)
+            doctexts = {}
+            pdf_path = os.path.join("downloads", f"{item['izon']}.pdf")
+            with pdfplumber.open(pdf_path) as pdf:
+                texts = ""
+                for page in pdf.pages:
+                    texts += page.extract_text() + "\n"
+                texts = texts.replace("\n", " ").replace("  ", " ").strip()
+                doctexts[pdf_path] = texts
+            os.remove(os.path.join("downloads", f"{item['izon']}.pdf"))
+            doctext_by_uuid[item["izon"]] = doctexts
+        else:
+            logging.error(f"Failed to download PDF for item {item['izon']}: HTTP {response.status_code}")
+    except Exception as e:
+        logging.error(f"Error processing PDF for item {item['izon']}: {str(e)}")
+        continue
 
 doctext_by_uuid_lemma = {}
 if nlp:
     for izon in doctext_by_uuid:
         doctext_by_uuid_lemma[izon] = {}
         for file in doctext_by_uuid[izon]:
-            doctext_by_uuid_lemma[izon][file] = lemmatize(
-                nlp, doctext_by_uuid[izon][file]
-            )
+            try:
+                doctext_by_uuid_lemma[izon][file] = lemmatize(
+                    nlp, doctext_by_uuid[izon][file]
+                )
+            except Exception as e:
+                logging.error(f"Lemmatization failed for {file} in item {izon}: {str(e)}")
+                doctext_by_uuid_lemma[izon][file] = []
 
 
 def search(text, keyword, nlp_warn=False):
     results = []
-    matches = [m.start() for m in re.finditer(re.escape(keyword), text, re.IGNORECASE)]
+    try:
+        matches = [m.start() for m in re.finditer(re.escape(keyword), text, re.IGNORECASE)]
 
-    words = text.split()
+        words = text.split()
 
-    for match_index in matches:
-        # Convert character index to word index
-        char_count = 0
-        word_index = 0
+        for match_index in matches:
+            # Convert character index to word index
+            char_count = 0
+            word_index = 0
 
-        for word_index, word in enumerate(words):
-            char_count += len(word) + 1  # +1 accounts for spaces
-            if char_count > match_index:
-                break
+            for word_index, word in enumerate(words):
+                char_count += len(word) + 1  # +1 accounts for spaces
+                if char_count > match_index:
+                    break
 
-        # Get surrounding 10 words before and after the match
-        before = " ".join(words[max(word_index - 16, 0) : word_index])
-        after = " ".join(words[word_index + 1 : word_index + 17])
-        found_word = words[word_index]
-        match = SequenceMatcher(
-            None, found_word, event["parameters"]
-        ).find_longest_match()
-        match_before = found_word[: match.a]
-        if match_before != "":
-            before = before + " " + match_before
-        else:
-            before = before + " "
-        match_after = found_word[match.a + match.size :]
-        if match_after != "":
-            after = match_after + " " + after
-        else:
-            after = " " + after
-        common_part = found_word[match.a : match.a + match.size]
+            # Get surrounding 10 words before and after the match
+            before = " ".join(words[max(word_index - 16, 0) : word_index])
+            after = " ".join(words[word_index + 1 : word_index + 17])
+            found_word = words[word_index]
+            match = SequenceMatcher(
+                None, found_word, event["parameters"]
+            ).find_longest_match()
+            match_before = found_word[: match.a]
+            if match_before != "":
+                before = before + " " + match_before
+            else:
+                before = before + " "
+            match_after = found_word[match.a + match.size :]
+            if match_after != "":
+                after = match_after + " " + after
+            else:
+                after = " " + after
+            common_part = found_word[match.a : match.a + match.size]
 
-        if nlp_warn:
-            before = "szótövezett találat: " + before
+            if nlp_warn:
+                before = "szótövezett találat: " + before
 
-        results.append(
-            {
-                "file": file,
-                "before": before,
-                "after": after,
-                "common": common_part,
-            }
-        )
+            results.append(
+                {
+                    "file": file,
+                    "before": before,
+                    "after": after,
+                    "common": common_part,
+                }
+            )
+    except Exception as e:
+        logging.error(f"Search operation failed for keyword '{keyword}': {str(e)}")
+        return []
     return results
 
 
@@ -290,6 +311,6 @@ try:
 except Exception as e:
     logging.error(f"Error closing database connection: {str(e)}")
 
-logging.info("KormanyScraper completed successfully")
+logging.info("Parlamentscraper completed successfully")
 
 print("Ready. Bye.")
