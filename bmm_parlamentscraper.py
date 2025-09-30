@@ -182,8 +182,6 @@ def search(text, keyword, do_lemmatize=False):
     keyword = keyword.replace('*', '').replace('"', '')
     results = []
     matches = [m.start() for m in re.finditer(re.escape(keyword), text, re.IGNORECASE)]
-    if keyword in text:
-        pass
     surrounding_context = 64
 
     for match_index in matches:
