@@ -171,56 +171,38 @@ if nlp:
                 doctext_by_uuid_lemma[izon][file] = []
 
 
-def search(text, keyword, nlp_warn=False):
+def serch_multiple(text, keywords, nlp_warn=False):
     results = []
-    try:
-        matches = [m.start() for m in re.finditer(re.escape(keyword), text, re.IGNORECASE)]
+    for keyword in keywords.split(','):
+        results += search(text, keyword, nlp_warn)
+    return results
 
-        words = text.split()
 
-        for match_index in matches:
-            # Convert character index to word index
-            char_count = 0
-            word_index = 0
+def search(text, keyword, do_lemmatize=False):
+    keyword = keyword.replace('*', '').replace('"', '')
+    results = []
+    matches = [m.start() for m in re.finditer(re.escape(keyword), text, re.IGNORECASE)]
+    if keyword in text:
+        pass
+    surrounding_context = 64
 
-            for word_index, word in enumerate(words):
-                char_count += len(word) + 1  # +1 accounts for spaces
-                if char_count > match_index:
-                    break
+    for match_index in matches:
+        before_context = text[max(0, match_index-surrounding_context):match_index]
+        after_context = text[match_index+len(keyword):match_index+len(keyword)+surrounding_context]
+        common_part = text[match_index:match_index+len(keyword)]
 
-            # Get surrounding 10 words before and after the match
-            before = " ".join(words[max(word_index - 16, 0) : word_index])
-            after = " ".join(words[word_index + 1 : word_index + 17])
-            found_word = words[word_index]
-            match = SequenceMatcher(
-                None, found_word, event["parameters"]
-            ).find_longest_match()
-            match_before = found_word[: match.a]
-            if match_before != "":
-                before = before + " " + match_before
-            else:
-                before = before + " "
-            match_after = found_word[match.a + match.size :]
-            if match_after != "":
-                after = match_after + " " + after
-            else:
-                after = " " + after
-            common_part = found_word[match.a : match.a + match.size]
+        lemma_warn = ''
+        if do_lemmatize:
+            lemma_warn = "szótövezett találat: "
 
-            if nlp_warn:
-                before = "szótövezett találat: " + before
-
-            results.append(
-                {
-                    "file": file,
-                    "before": before,
-                    "after": after,
-                    "common": common_part,
-                }
-            )
-    except Exception as e:
-        logging.error(f"Search operation failed for keyword '{keyword}': {str(e)}")
-        return []
+        results.append(
+            {
+                "file": file,
+                "before": lemma_warn+before_context,
+                "after": after_context,
+                "common": common_part,
+            }
+        )
     return results
 
 
@@ -248,12 +230,12 @@ for event in events["data"]:
             results = []
             for file in doctext_by_uuid.get(item["izon"], {}):
                 text = doctext_by_uuid[item["izon"]][file]
-                current_results = search(text, event["parameters"])
+                current_results = serch_multiple(text, event["parameters"])
                 if not current_results and nlp:
                     logging.debug(
                         f"No direct match found for '{event['parameters']}' in {file}, trying lemmatized search"
                     )
-                    current_results = search(
+                    current_results = serch_multiple(
                         " ".join(doctext_by_uuid_lemma[item["izon"]][file]),
                         event["parameters"],
                         nlp_warn=True,
