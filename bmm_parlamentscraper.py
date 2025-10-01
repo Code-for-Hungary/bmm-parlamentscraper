@@ -178,26 +178,50 @@ def serch_multiple(text, keywords, nlp_warn=False):
     return results
 
 
-def search(text, keyword, do_lemmatize=False):
+def search(text, keyword, nlp_warn=False):
     keyword = keyword.replace('*', '').replace('"', '')
     results = []
     matches = [m.start() for m in re.finditer(re.escape(keyword), text, re.IGNORECASE)]
-    surrounding_context = 64
+
+    words = text.split()
 
     for match_index in matches:
-        before_context = text[max(0, match_index-surrounding_context):match_index]
-        after_context = text[match_index+len(keyword):match_index+len(keyword)+surrounding_context]
-        common_part = text[match_index:match_index+len(keyword)]
+        # Convert character index to word index
+        char_count = 0
+        word_index = 0
 
-        lemma_warn = ''
-        if do_lemmatize:
-            lemma_warn = "szótövezett találat: "
+        for word_index, word in enumerate(words):
+            char_count += len(word) + 1  # +1 accounts for spaces
+            if char_count > match_index:
+                break
+
+        # Get surrounding 10 words before and after the match
+        before = " ".join(words[max(word_index - 16, 0) : word_index])
+        after = " ".join(words[word_index + 1 : word_index + 17])
+        found_word = words[word_index]
+        match = SequenceMatcher(
+            None, found_word, event["parameters"]
+        ).find_longest_match()
+        match_before = found_word[: match.a]
+        if match_before != "":
+            before = before + " " + match_before
+        else:
+            before = before + " "
+        match_after = found_word[match.a + match.size :]
+        if match_after != "":
+            after = match_after + " " + after
+        else:
+            after = " " + after
+        common_part = found_word[match.a : match.a + match.size]
+
+        if nlp_warn:
+            before = "szótövezett találat: " + before
 
         results.append(
             {
                 "file": file,
-                "before": lemma_warn+before_context,
-                "after": after_context,
+                "before": before,
+                "after": after,
                 "common": common_part,
             }
         )
