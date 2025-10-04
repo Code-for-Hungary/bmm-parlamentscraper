@@ -151,7 +151,7 @@ for item in new_items:
                 doctexts[pdf_path] = texts
             os.remove(os.path.join("downloads", f"{item['izon']}.pdf"))
             doctext_by_uuid[item["izon"]] = doctexts
-        else:
+        elif item['type'] not in ['A']: # Azonnali kérdés esetén nem mindig az irományszöveg a pdf
             logging.error(f"Failed to download PDF for item {item['izon']}: HTTP {response.status_code}")
     except Exception as e:
         logging.error(f"Error processing PDF for item {item['izon']}: {str(e)}")
