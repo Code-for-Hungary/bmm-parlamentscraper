@@ -11,5 +11,5 @@ eventgenerator_api_key=
 
 [Download]
 url = https://www.parlament.hu/cgi-bin/web-api-pub/iromanyok.cgi
-irom_url = https://www.parlament.hu/irom42/
+irom_url = https://www.parlament.hu/irom43/
 access_token = 

@@ -112,7 +112,7 @@ for iromany in iromanyok:
         if any(elem.tag == "cim" for elem in iromany)
         else "N/A"
     )
-    irom_path = f"{izon:05}/{izon:05}.pdf"
+    irom_path = f"{izon:0>5}/{izon:0>5}.pdf"
     pdf_url = f"{irom_url}{irom_path}"
     item = {
         "izon": izon,
