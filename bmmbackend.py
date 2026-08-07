@@ -27,7 +27,7 @@ class bmmbackend:
         notificationData = {
             'uuid': self.generatorID,
             'eventUuid': eventUUID,
-            'content': content
+            'content': content + "<br>❗Új weboldalon tettük izgalmassá a parlamenti adatokat! Keress felszólalásokban, nézd meg, hogyan szavaztak a képviselők, és kövesd végig a törvényjavaslatok sorsát. https://parlamonitor.k-monitor.hu"
         }
         try:
             response = requests.post(f"{self.backendURL}/api/events/notify/{eventUUID}?api_key={api_key}", data=notificationData)
